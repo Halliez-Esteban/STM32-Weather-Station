@@ -1,0 +1,18 @@
+# Fichiers de compilation STM32CubeIDE
+/Debug/
+/Release/
+*.o
+*.elf
+*.bin
+*.hex
+*.map
+*.d
+*.su
+
+# Fichiers de configuration utilisateur / IDE
+.settings/
+*.launch
+
+# Fichiers temporaires système
+.DS_Store
+Thumbs.db
