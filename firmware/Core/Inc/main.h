@@ -41,7 +41,9 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-
+#define BURST_SIZE 8
+#define COMPENSATION_BURST_SIZE_1 25
+#define COMPENSATION_BURST_SIZE_2 7
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -52,6 +54,19 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
+//BME280 Functions
+void BME280_Init(void);
+void BME280_GetData(void);
+void BME280_isConnected(void);
+void BME280_compensation_read(void);
+//UART
+void BME280_print_compensated_data(void);
+void BME280_print_raw_data(void);
+
+//Functions provided by Bosch in the datasheet (cf. /docs)
+uint32_t BME280_compensate_T_int32(uint32_t adc_T);
+uint32_t BME280_compensate_P_int64(int32_t adc_P);
+uint32_t BME280_compensate_H_int32(int32_t adc_H);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */
