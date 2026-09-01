@@ -54,6 +54,7 @@ extern "C" {
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
+/* USER CODE BEGIN EFP */
 //BME280 Functions
 void BME280_Init(void);
 void BME280_GetData(void);
@@ -67,8 +68,6 @@ void BME280_print_raw_data(void);
 uint32_t BME280_compensate_T_int32(uint32_t adc_T);
 uint32_t BME280_compensate_P_int64(int32_t adc_P);
 uint32_t BME280_compensate_H_int32(int32_t adc_H);
-/* USER CODE BEGIN EFP */
-
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
