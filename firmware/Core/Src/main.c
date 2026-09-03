@@ -44,6 +44,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
+I2C_HandleTypeDef hi2c2;
 I2C_HandleTypeDef hi2c3;
 
 UART_HandleTypeDef huart2;
@@ -76,6 +77,21 @@ uint32_t pressure_raw = 0; //20bits
 uint32_t humidity_compensated, temperature_compensated, pressure_compensated;
 uint32_t temp_int,temp_dec,humid_int,humid_dec,press_int,press_dec; //Real Data readable (e.g 22.67degC)
 
+//RTC Module Variables
+uint8_t RX_DevAddress_RTC = 0xD0; //1101 0000 Read
+uint8_t TX_DevAddress_RTC = 0xD1; //1101 0001 Write
+uint8_t RX_Address_RTC = 0;
+uint8_t TX_Address_RTC = 0;
+uint8_t RX_Buffer_RTC_Burst[BURST_SIZE_RTC];
+
+uint8_t currentYear = 0;
+uint8_t currentMonth = 0;
+uint8_t currentDay = 0;
+uint8_t currentHour = 0;
+uint8_t currentMinute = 0;
+uint8_t currentSecond = 0;
+char currentDate[128];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -84,6 +100,7 @@ static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C3_Init(void);
+static void MX_I2C2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -125,6 +142,7 @@ int main(void)
   MX_I2C1_Init();
   MX_USART2_UART_Init();
   MX_I2C3_Init();
+  MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
 
   char test[] = "--- TEST UART STM32 OK ---\r\n";
@@ -140,8 +158,9 @@ int main(void)
 
   //Setting SSD1306 OLED Display
   ssd1306_Init();
-  //ssd1306_Fill(White);
-  //ssd1306_UpdateScreen();
+
+  //Uncomment the following line to manually set the date (when Vbatt is off or replaced)
+  //ds3231_Init(2026, 9, 3, 18, 52, 0);
 
   /* USER CODE END 2 */
 
@@ -149,10 +168,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
-	char myText[] = "1st Sept 2026";
-	ssd1306_WriteWeatherInfos(myText, temp_int,temp_dec,humid_int,humid_dec,press_int,press_dec);
+
+	//Read Date
+	ds3231_getDate();
+
+	//Printing Weather Informations on the OLED Display
+	ssd1306_WriteWeatherInfos(currentDate, temp_int,temp_dec,humid_int,humid_dec,press_int,press_dec);
 	HAL_Delay(2000);
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
@@ -231,6 +254,40 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
+  * @brief I2C2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C2_Init(void)
+{
+
+  /* USER CODE BEGIN I2C2_Init 0 */
+
+  /* USER CODE END I2C2_Init 0 */
+
+  /* USER CODE BEGIN I2C2_Init 1 */
+
+  /* USER CODE END I2C2_Init 1 */
+  hi2c2.Instance = I2C2;
+  hi2c2.Init.ClockSpeed = 100000;
+  hi2c2.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c2.Init.OwnAddress1 = 0;
+  hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c2.Init.OwnAddress2 = 0;
+  hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C2_Init 2 */
+
+  /* USER CODE END I2C2_Init 2 */
 
 }
 
@@ -524,18 +581,77 @@ void BME280_print_compensated_data(void)
 
 	temp_int = temperature_compensated / 100;
 	temp_dec = temperature_compensated % 100;
-	sprintf(buf, "Temperature : %d.%d °C\r\n", temp_int,temp_dec);
+	sprintf(buf, "Temperature : %d.%d °C\r\n", (int)temp_int,(int)temp_dec);
 	HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), HAL_MAX_DELAY);
 
 	press_int = pressure_compensated/25600;
 	press_dec = ((pressure_compensated % 25600)*100) / 25600;
-	sprintf(buf, "Pressure : %d.%d hPa\r\n", press_int,press_dec);
+	sprintf(buf, "Pressure : %d.%d hPa\r\n", (int)press_int,(int)press_dec);
 	HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), HAL_MAX_DELAY);
 
 	humid_int = humidity_compensated/1024;
 	humid_dec = ((humidity_compensated % 1024)*100) / 1024;
-	sprintf(buf, "Humidity : %d.%d %RH\r\n", humid_int,humid_dec);
+	sprintf(buf, "Humidity : %d.%d RH\r\n", (int)humid_int,(int)humid_dec);
 	HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), HAL_MAX_DELAY);
+}
+
+//Conversion from Decimal to BCD (Writing into RTC)
+uint8_t decToBcd(uint8_t val) {
+    return ((val / 10) << 4) | (val % 10);
+}
+
+//This function needs to be called if the RTC module onboard battery has been switched
+//It gives the RTC Module the current time in order to setup its own clock
+void ds3231_Init(int year, int month, int day, int hour, int minute, int second)
+{
+	//Setting up RTC Date
+	uint8_t setDate[7];
+	TX_Address_RTC = 0x00;
+
+	setDate[0] = decToBcd(second);
+	setDate[1] = decToBcd(minute);
+	setDate[2] = decToBcd(hour);     // 24h Mode
+	setDate[3] = decToBcd(0x00); //Skipped
+	setDate[4] = decToBcd(day);
+	setDate[5] = decToBcd(month);
+	setDate[6] = decToBcd(year % 100); //Only contains the last two digits
+
+	//Burst Write
+	HAL_I2C_Mem_Write(&hi2c2, TX_DevAddress_RTC, TX_Address_RTC, I2C_MEMADD_SIZE_8BIT, setDate, sizeof(setDate), 100);
+
+	//Debugging
+	char buf[64];
+	for (int i=0;i<7;i++)
+	{
+		sprintf(buf, "Data %d : %u \r\n", i,setDate[i]);
+		HAL_UART_Transmit(&huart2, (uint8_t*)buf, strlen(buf), HAL_MAX_DELAY);
+	}
+
+}
+
+//Get current date from ds3231 RTC Module
+void ds3231_getDate(void)
+{
+	//Burst Reading the RTC registers
+	RX_Address_RTC = 0x00;
+	HAL_I2C_Mem_Read(&hi2c2,RX_DevAddress_RTC,RX_Address_RTC,I2C_MEMADD_SIZE_8BIT,RX_Buffer_RTC_Burst,BURST_SIZE_RTC,1000);
+
+	//Setting variables
+	//BCD (Binary-Coded Decimal) format, Needs conversion
+	currentYear = ((RX_Buffer_RTC_Burst[6]>>4)*10) + (RX_Buffer_RTC_Burst[6] & 0x0F); //Year only contains last digits
+	currentMonth = (((RX_Buffer_RTC_Burst[5]>>4) & 0x01)*10) + (RX_Buffer_RTC_Burst[5] & 0x0F);
+	currentDay = (((RX_Buffer_RTC_Burst[4]>>4) & 0x03)*10) + (RX_Buffer_RTC_Burst[4] & 0x0F);
+	currentHour = (((RX_Buffer_RTC_Burst[2]>>4) & 0x03)*10) + (RX_Buffer_RTC_Burst[2] & 0x0F);
+	currentMinute = ((RX_Buffer_RTC_Burst[1]>>4)*10) + (RX_Buffer_RTC_Burst[1] & 0x0F);
+	currentSecond = (((RX_Buffer_RTC_Burst[0] & 0x7F)>>4)*10) + (RX_Buffer_RTC_Burst[0] & 0x0F);
+
+	//Setting currentDate Value for saving in SD Card and Display on OLED Screen
+	sprintf(currentDate, "%02d/%02d/%02d %02d:%02d",currentDay,currentMonth,currentYear+2000,currentHour,currentMinute);
+
+	//Uncomment those lines to debug the clock via UART
+	//char test[128];
+	//sprintf(test, "Year : %d \r\nMonth : %d \r\nDay : %d \r\nHour : %d \r\nMinutes : %d \r\nSeconds : %d \r\n", RX_Buffer_RTC_Burst[6],RX_Buffer_RTC_Burst[5],RX_Buffer_RTC_Burst[4],RX_Buffer_RTC_Burst[2],RX_Buffer_RTC_Burst[1],RX_Buffer_RTC_Burst[0]);
+	//HAL_UART_Transmit(&huart2, (uint8_t*)test, strlen(test), HAL_MAX_DELAY);
 }
 
 /* USER CODE END 4 */

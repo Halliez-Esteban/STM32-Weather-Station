@@ -27,3 +27,5 @@ extern const SSD1306_Font_t Font_16x15;
 #endif
 
 #endif // __SSD1306_FONTS_H__
+
+extern const unsigned char pressure_icon[];

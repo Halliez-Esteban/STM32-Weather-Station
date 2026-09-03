@@ -44,6 +44,7 @@ extern "C" {
 #define BURST_SIZE 8
 #define COMPENSATION_BURST_SIZE_1 25
 #define COMPENSATION_BURST_SIZE_2 7
+#define BURST_SIZE_RTC 7
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -64,6 +65,10 @@ void BME280_compensation_read(void);
 void BME280_print_compensated_data(void);
 void BME280_print_raw_data(void);
 
+//DS3231 RTC Module Functions
+void ds3231_Init(int year, int month, int day, int hour, int minute, int second);
+void ds3231_getDate(void);
+
 //Functions provided by Bosch in the datasheet (cf. /docs)
 uint32_t BME280_compensate_T_int32(uint32_t adc_T);
 uint32_t BME280_compensate_P_int64(int32_t adc_P);
@@ -83,8 +88,6 @@ uint32_t BME280_compensate_H_int32(int32_t adc_H);
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
-#define SWO_Pin GPIO_PIN_3
-#define SWO_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

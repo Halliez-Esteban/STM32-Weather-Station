@@ -739,18 +739,8 @@ void ssd1306_WriteHumid(int32_t humid_int,uint32_t humid_dec)
 //Printing Pressure Informations on OLED
 void ssd1306_WritePress(int32_t press_int,uint32_t press_dec)
 {
-	//Manually drawn a mass in pixel art
-	ssd1306_DrawCircle(16, 40,11, White);
-	ssd1306_DrawCircle(16, 40,13, White);
-	ssd1306_DrawCircle(16, 40,1, White);
-	ssd1306_Line(14,38,14,37,White);
-	ssd1306_Line(18,38,18,37,White);
-	ssd1306_Line(15,36,15,33,White);
-	ssd1306_Line(17,36,17,33,White);
-	ssd1306_Line(16,33,16,29,White);
-
-
-
+	//Draw a mountain in pixel art
+	ssd1306_DrawBitmap(5,30,pressure_icon,30,30,White);
 
 	//Pressure Informations
 	ssd1306_SetCursor(35, 30);
