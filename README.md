@@ -2,7 +2,7 @@
 
 <CENTER><img src="docs/stm32_weather_station_diagram.png" width="500"></CENTER>
 
-
+ 
 ## Overview
 This repository contains an embedded, low-power environmental monitoring system based on the **STM32** microcontrollers. It periodically samples meteorological parameters, adds high-precision time tracking, updates a local interface, and redundantly logs data locally and externally via USB.
 
