@@ -1,4 +1,5 @@
-# STM32 Real-Time Environmental Datalogger (WIP)
+# STM32 Real-Time Environmental Datalogger V1[stm32_weather_station_diagram_en.pdf](https://github.com/user-attachments/files/31962754/stm32_weather_station_diagram_en.pdf)
+
 
 ## Overview
 This repository contains an embedded, low-power environmental monitoring system based on the **STM32** microcontrollers. It periodically samples meteorological parameters, adds high-precision time tracking, updates a local interface, and redundantly logs data locally and externally via USB.
@@ -15,30 +16,7 @@ The project follows strict **IVVQ (Integration, Verification, Validation, and Qu
 
 ## Architecture & Communication Buses
 
-                            +----------------------+
-                            |   BME280 (I2C)       |
-                            | (Temp, Pres, Hum)    |
-                            +----------+-----------+
-                                       |
-                                       | (I2C Bus)
-                                       |
-                            +----------+-----------+
-                            |  External RTC (I2C)  |
-                            |  (Timestamp)         |
-                            +----------+-----------+
-                                       |
-                                       v
-    +------------------+     +-------------------+     +-------------------+
-    |   OLED Screen    | <---|       STM32       |---> |    SD Card        |
-    |    (Display)     |I2C  |  (Microcontroler) |SPI/ |    (FatFS)        |
-    +------------------+     +---------+---------+SDIO +-------------------+
-                                       |
-                                       | (USB Virtual COM Port / CDC)
-                                       v
-                             +-------------------+
-                             |   PC (Terminal)   |
-                             +-------------------+
-
+[stm32_weather_station_diagram_en.pdf](https://github.com/user-attachments/files/31962768/stm32_weather_station_diagram_en.pdf)
 
 ## Hardware Components
 * **MCU:** STM32 Microcontroller (ARM Cortex-M)
