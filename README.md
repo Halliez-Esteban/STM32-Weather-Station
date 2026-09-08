@@ -1,6 +1,6 @@
 # STM32 Real-Time Environmental Datalogger V1
 
-[stm32_weather_station_diagram_en.pdf](https://github.com/user-attachments/files/31962754/stm32_weather_station_diagram_en.pdf)
+ ![STM32 Weather Station Diagram](docs/stm32_weather_station_diagram.png)
 
 
 ## Overview
