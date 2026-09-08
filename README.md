@@ -52,4 +52,4 @@ The project follows strict **IVVQ (Integration, Verification, Validation, and Qu
 ```text
 ├── docs/            # Hardware schematics, datasheets
 ├── firmware/        # STM32 C/C++ source code (Drivers, Middleware, FatFS)
-└── tests/           # Unit tests and simulation scripts for data parsers
+└── tests/           # Unit tests and simulation outputs
