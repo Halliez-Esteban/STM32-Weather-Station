@@ -1,6 +1,6 @@
 # STM32 Real-Time Environmental Datalogger V1
 
-<img src="docs/stm32_weather_station_diagram.png" width="800">
+<CENTER><img src="docs/stm32_weather_station_diagram.png" width="500"></CENTER>
 
 
 ## Overview
