@@ -1,4 +1,6 @@
-# STM32 Real-Time Environmental Datalogger V1[stm32_weather_station_diagram_en.pdf](https://github.com/user-attachments/files/31962754/stm32_weather_station_diagram_en.pdf)
+# STM32 Real-Time Environmental Datalogger V1
+
+[stm32_weather_station_diagram_en.pdf](https://github.com/user-attachments/files/31962754/stm32_weather_station_diagram_en.pdf)
 
 
 ## Overview
@@ -16,7 +18,8 @@ The project follows strict **IVVQ (Integration, Verification, Validation, and Qu
 
 ## Architecture & Communication Buses
 
-[stm32_weather_station_diagram_en.pdf](https://github.com/user-attachments/files/31962768/stm32_weather_station_diagram_en.pdf)
+<img width="431" height="311" alt="{2FB96C71-CA8A-4B17-8B23-81BFB7693776}" src="https://github.com/user-attachments/assets/29129c16-f8ac-4525-9bea-94c82c09ce14" />
+
 
 ## Hardware Components
 * **MCU:** STM32 Microcontroller (ARM Cortex-M)
