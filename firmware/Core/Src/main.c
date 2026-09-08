@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "fatfs.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -25,6 +26,7 @@
 #include <stdio.h>
 #include "ssd1306.h"
 #include "ssd1306_fonts.h"
+#include <stdarg.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,6 +48,8 @@
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
 I2C_HandleTypeDef hi2c3;
+
+SPI_HandleTypeDef hspi2;
 
 UART_HandleTypeDef huart2;
 
@@ -101,12 +105,25 @@ static void MX_I2C1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_I2C3_Init(void);
 static void MX_I2C2_Init(void);
+static void MX_SPI2_Init(void);
 /* USER CODE BEGIN PFP */
-
+void myprintf(const char *fmt,...);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void myprintf(const char *fmt, ...) {
+  static char buffer[256];
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(buffer, sizeof(buffer), fmt, args);
+  va_end(args);
+
+  int len = strlen(buffer);
+  HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, -1);
+
+}
 
 /* USER CODE END 0 */
 
@@ -137,12 +154,15 @@ int main(void)
 
   /* USER CODE END SysInit */
 
+
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_I2C1_Init();
   MX_USART2_UART_Init();
   MX_I2C3_Init();
   MX_I2C2_Init();
+  MX_SPI2_Init();
+  MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
   char test[] = "--- TEST UART STM32 OK ---\r\n";
@@ -160,7 +180,17 @@ int main(void)
   ssd1306_Init();
 
   //Uncomment the following line to manually set the date (when Vbatt is off or replaced)
-  //ds3231_Init(2026, 9, 3, 18, 52, 0);
+  //ds3231_Init(2026, 9, 8, 12, 18, 0);
+
+  //Uncomment those lines to reset SD Card File Management
+  //Deletes old version of the txt and csv file
+  //fatFS_deleteFile("weather.txt");
+  //fatFS_deleteFile("weather.csv");
+
+  ds3231_getDate();
+  fatFS_writeFile(); //First Input writing when turning ON the STM32
+  fatFS_inputCSV();
+  fatFS_readFile(); //Reading weather.txt, the text file containing the weather datas
 
   /* USER CODE END 2 */
 
@@ -171,10 +201,21 @@ int main(void)
 
 	//Read Date
 	ds3231_getDate();
+	//Getting Weather Data From BME280
+	BME280_GetData();
+	HAL_Delay(1000);
 
 	//Printing Weather Informations on the OLED Display
 	ssd1306_WriteWeatherInfos(currentDate, temp_int,temp_dec,humid_int,humid_dec,press_int,press_dec);
 	HAL_Delay(2000);
+
+	//Every 5minutes, we write the data into the SD Card
+	//In a text file, and in a csv file used to display datas on apps for example
+	if((currentMinute%5 == 0) && (currentSecond<3)){
+		fatFS_writeFile();
+		fatFS_inputCSV();
+	}
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -326,6 +367,44 @@ static void MX_I2C3_Init(void)
 }
 
 /**
+  * @brief SPI2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI2_Init(void)
+{
+
+  /* USER CODE BEGIN SPI2_Init 0 */
+
+  /* USER CODE END SPI2_Init 0 */
+
+  /* USER CODE BEGIN SPI2_Init 1 */
+
+  /* USER CODE END SPI2_Init 1 */
+  /* SPI2 parameter configuration*/
+  hspi2.Instance = SPI2;
+  hspi2.Init.Mode = SPI_MODE_MASTER;
+  hspi2.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi2.Init.NSS = SPI_NSS_SOFT;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
+  hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi2.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI2_Init 2 */
+
+  /* USER CODE END SPI2_Init 2 */
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -379,6 +458,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_SET);
+
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
@@ -391,6 +473,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : SPI2_CS_Pin */
+  GPIO_InitStruct.Pin = SPI2_CS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(SPI2_CS_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -653,6 +742,194 @@ void ds3231_getDate(void)
 	//sprintf(test, "Year : %d \r\nMonth : %d \r\nDay : %d \r\nHour : %d \r\nMinutes : %d \r\nSeconds : %d \r\n", RX_Buffer_RTC_Burst[6],RX_Buffer_RTC_Burst[5],RX_Buffer_RTC_Burst[4],RX_Buffer_RTC_Burst[2],RX_Buffer_RTC_Burst[1],RX_Buffer_RTC_Burst[0]);
 	//HAL_UART_Transmit(&huart2, (uint8_t*)test, strlen(test), HAL_MAX_DELAY);
 }
+
+//Function used to Write current weather data into the SD Card
+void fatFS_writeFile(void)
+{
+	myprintf("\r\n~ Writing Data in SD Card ~\r\n\r\n");
+
+	HAL_Delay(1000); //a short delay is important to let the SD card settle
+
+	//some variables for FatFs
+	FATFS FatFs; 	//Fatfs handle
+	FIL fil; 		//File handle
+	FRESULT fres; //Result after operations
+
+	//Open the file system
+	fres = f_mount(&FatFs, "", 1); //1=mount now
+	if (fres != FR_OK) {
+	   	myprintf("f_mount error (%i)\r\n", fres);
+	   	while(1);
+	}
+
+    //Opening weather.txt to write weather data in the SD Card
+    fres = f_open(&fil, "weather.txt", FA_WRITE | FA_OPEN_APPEND);
+    if(fres == FR_OK) {
+  	myprintf("I was able to open 'weather.txt' for writing\r\n");
+    } else {
+  	myprintf("f_open error (%i)\r\n", fres);
+    }
+
+    //Copy in the data
+    BYTE writeBuf[256];
+    sprintf(writeBuf, "--- %s --- \r\nTemperature : %u.%u deg \r\nHumidity : %u.%u RH \r\nPressure : %u.%u hPa \r\n", currentDate, (int)temp_int,(int)temp_dec,(int)humid_int,(int)humid_dec,(int)press_int,(int)press_dec);
+    UINT bytesWrote;
+    fres = f_write(&fil, writeBuf, strlen(writeBuf), &bytesWrote);
+    if(fres == FR_OK) {
+    	myprintf("Wrote %i bytes to 'weather.txt'!\r\n", bytesWrote);
+    } else {
+    	myprintf("f_write error (%i)\r\n", fres);
+    }
+
+    //Close the file
+    f_close(&fil);
+
+    //We're done, so de-mount the drive
+    f_mount(NULL, "", 0);
+}
+
+void fatFS_readFile(void)
+{
+	myprintf("\r\n~ Reading Data from SD Card ~\r\n\r\n");
+
+	HAL_Delay(1000); //a short delay is important to let the SD card settle
+
+	//some variables for FatFs
+	FATFS FatFs; 	//Fatfs handle
+	FIL fil; 		//File handle
+	FRESULT fres; //Result after operations
+
+	//Open the file system
+	fres = f_mount(&FatFs, "", 1); //1=mount now
+	if (fres != FR_OK) {
+	   	myprintf("f_mount error (%i)\r\n", fres);
+	   	while(1);
+	}
+
+	//Now let's try to open file "test.txt"
+	fres = f_open(&fil, "weather.txt", FA_READ);
+	if (fres != FR_OK) {
+	   	myprintf("f_open error (%i)\r\n", fres);
+	   	while(1);
+	}
+	myprintf("I was able to open 'weather.txt' for reading!\r\n");
+
+	//Read 30 bytes from "test.txt" on the SD card
+	BYTE readBuf[256];
+
+	while (!f_eof(&fil)){
+	//We can either use f_read OR f_gets to get data out of files
+	//f_gets is a wrapper on f_read that does some string formatting for us
+		if (f_gets(readBuf, sizeof(readBuf), &fil) != NULL)
+		{
+			myprintf("%s \r\n", readBuf);
+		}
+		else
+		{
+			break; // EOF or Reading ERROR
+		}
+	}
+
+    //Close the file
+	f_close(&fil);
+
+	//We're done, so de-mount the drive
+	f_mount(NULL, "", 0);
+	myprintf("\r\n\r\n~ Reading complete ~\r\n");
+}
+
+//Adding data in a CSV File
+void fatFS_inputCSV(void)
+{
+	//some variables for FatFs
+	FATFS FatFs; 	//Fatfs handle
+	FIL fil; 		//File handle
+	FRESULT fres; //Result after operations
+	UINT bw;
+
+	FILINFO fno;
+	uint8_t file_is_new = 0;
+
+	// Verifying if file exists
+	fres = f_stat("weather.csv", &fno);
+
+	if (fres == FR_NO_FILE) {
+	    // The file doesn't exist -> Going to be created
+	    file_is_new = 1;
+	}
+
+	//Open the file system
+	fres = f_mount(&FatFs, "", 1); //1=mount now
+	if (fres != FR_OK) {
+	   	myprintf("f_mount error (%i)\r\n", fres);
+	  	while(1);
+	}
+
+    // Opening CSV File in Writing Mode
+	// OPEN_APPEND to append data, avoiding overwriting
+	// Creating the file if not existing
+    fres = f_open(&fil, "weather.csv", FA_WRITE | FA_OPEN_APPEND);
+    if (fres == FR_OK)
+    {
+    	myprintf("I was able to open 'weather.csv' for writing\r\n");
+    	//Titling the canva if new
+    	if(file_is_new==1){
+    		char title[256];
+    		int len = sprintf(title, "Date;Temperature(degree C);Humidity(RH);Pressure(hPa)\n");
+
+    		// Writing in the .csv file
+            fres = f_write(&fil, title, len, &bw);
+
+    	}
+        // CSV Formating
+        char buffer[256];
+        int len = sprintf(buffer, "%s;%u.%u;%u.%u;%u.%u\n", currentDate, (int)temp_int,(int)temp_dec,(int)humid_int,(int)humid_dec,(int)press_int,(int)press_dec);
+
+        // Writing in the .csv file
+        fres = f_write(&fil, buffer, len, &bw);
+
+        // Forced Writing (Security)
+        f_sync(&fil);
+
+        // Closing File
+        f_close(&fil);
+
+        //We're done, so de-mount the drive
+        f_mount(NULL, "", 0);
+        myprintf("Wrote data in 'weather.csv'!\r\n");
+	}
+}
+
+//Deleting a file from SD Card
+void fatFS_deleteFile(const char* filename)
+{
+    FATFS FatFs;
+    FRESULT fres;
+
+    // Mounting SD Card
+    fres = f_mount(&FatFs, "", 1);
+    if (fres != FR_OK) {
+        myprintf("f_mount error (%i)\r\n", fres);
+        return;
+    }
+
+    // Deleting File
+    fres = f_unlink(filename);
+
+    if (fres == FR_OK) {
+        myprintf("File '%s' successfully deleted !\r\n", filename);
+    }
+    else if (fres == FR_NO_FILE) {
+        myprintf("Error : File '%s' doesn't exist.\r\n", filename);
+    }
+    else {
+        myprintf("Error while deleting (%i)\r\n", fres);
+    }
+
+    //We're done, so de-mount the drive
+    f_mount(NULL, "", 0);
+}
+
 
 /* USER CODE END 4 */
 

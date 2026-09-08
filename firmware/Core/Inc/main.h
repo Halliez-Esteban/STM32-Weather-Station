@@ -73,6 +73,12 @@ void ds3231_getDate(void);
 uint32_t BME280_compensate_T_int32(uint32_t adc_T);
 uint32_t BME280_compensate_P_int64(int32_t adc_P);
 uint32_t BME280_compensate_H_int32(int32_t adc_H);
+
+//SD Card Management
+void fatFS_writeFile(void);
+void fatFS_readFile(void);
+void fatFS_inputCSV(void);
+void fatFS_deleteFile(const char* filename);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -84,12 +90,16 @@ uint32_t BME280_compensate_H_int32(int32_t adc_H);
 #define USART_RX_GPIO_Port GPIOA
 #define LD2_Pin GPIO_PIN_5
 #define LD2_GPIO_Port GPIOA
+#define SPI2_CS_Pin GPIO_PIN_14
+#define SPI2_CS_GPIO_Port GPIOB
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
+
+#define SD_SPI_HANDLE hspi2
 
 /* USER CODE END Private defines */
 

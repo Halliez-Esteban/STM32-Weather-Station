@@ -628,7 +628,7 @@ void ssd1306_WriteDate(char* date)
 	ssd1306_SetCursor(1, 3);
 	ssd1306_Line(1,3,127,3,White);
 	ssd1306_SetCursor(5, 5);
-	char retVal = ssd1306_WriteString(date, Font_7x10, White);
+	ssd1306_WriteString(date, Font_7x10, White);
 	ssd1306_SetCursor(1, 14);
 	ssd1306_Line(1,14,127,14,White);
 	ssd1306_SetCursor(1, 16);
@@ -676,16 +676,16 @@ void ssd1306_WriteTemp(int32_t temp_int,uint32_t temp_dec)
 	//Temperature Informations
 	ssd1306_SetCursor(35, 30);
 	char temp[] = "Temperature:";
-	char retValtemp = ssd1306_WriteString(temp, Font_7x10, White);
+	ssd1306_WriteString(temp, Font_7x10, White);
 	ssd1306_Line(35,40,115,40,White);
 	ssd1306_SetCursor(35, 50);
 	char temp_int_char[12];
-	snprintf(temp_int_char, sizeof(temp_int_char), "%u", temp_int);
+	snprintf(temp_int_char, sizeof(temp_int_char), "%u", (int)temp_int);
 	char temp_dec_char[12];
-	snprintf(temp_dec_char, sizeof(temp_dec_char), "%u", temp_dec);
+	snprintf(temp_dec_char, sizeof(temp_dec_char), "%u", (int)temp_dec);
 	char temp_char[64];
 	sprintf(temp_char, "%s.%s deg", temp_int_char, temp_dec_char);
-	char retValtemp2 = ssd1306_WriteString(temp_char, Font_7x10, White);
+	ssd1306_WriteString(temp_char, Font_7x10, White);
 
 }
 
@@ -724,16 +724,16 @@ void ssd1306_WriteHumid(int32_t humid_int,uint32_t humid_dec)
 	//Humidity Informations
 	ssd1306_SetCursor(35, 30);
 	char humid[] = "Humidity:";
-	char retValhumid = ssd1306_WriteString(humid, Font_7x10, White);
+	ssd1306_WriteString(humid, Font_7x10, White);
 	ssd1306_Line(35,40,95,40,White);
 	ssd1306_SetCursor(35, 50);
 	char humid_int_char[12];
-	snprintf(humid_int_char, sizeof(humid_int_char), "%u", humid_int);
+	snprintf(humid_int_char, sizeof(humid_int_char), "%u", (int)humid_int);
 	char humid_dec_char[12];
-	snprintf(humid_dec_char, sizeof(humid_dec_char), "%u", humid_dec);
+	snprintf(humid_dec_char, sizeof(humid_dec_char), "%u", (int)humid_dec);
 	char humid_char[64];
-	sprintf(humid_char, "%s.%s % RH", humid_int_char, humid_dec_char);
-	char retValhumid2 = ssd1306_WriteString(humid_char, Font_7x10, White);
+	sprintf(humid_char, "%s.%s RH", humid_int_char, humid_dec_char);
+	ssd1306_WriteString(humid_char, Font_7x10, White);
 }
 
 //Printing Pressure Informations on OLED
@@ -745,15 +745,15 @@ void ssd1306_WritePress(int32_t press_int,uint32_t press_dec)
 	//Pressure Informations
 	ssd1306_SetCursor(35, 30);
 	char press[] = "Pressure:";
-	char retValpress = ssd1306_WriteString(press, Font_7x10, White);
+	ssd1306_WriteString(press, Font_7x10, White);
 	ssd1306_Line(35,40,95,40,White);
 	ssd1306_SetCursor(35, 50);
 	char press_int_char[12];
-	snprintf(press_int_char, sizeof(press_int_char), "%u", press_int);
+	snprintf(press_int_char, sizeof(press_int_char), "%u", (int)press_int);
 	char press_dec_char[12];
-	snprintf(press_dec_char, sizeof(press_dec_char), "%u", press_dec);
+	snprintf(press_dec_char, sizeof(press_dec_char), "%u", (int)press_dec);
 	char press_char[64];
 	sprintf(press_char, "%s.%s hPa", press_int_char, press_dec_char);
-	char retValpress2 = ssd1306_WriteString(press_char, Font_7x10, White);
+	ssd1306_WriteString(press_char, Font_7x10, White);
 }
 
