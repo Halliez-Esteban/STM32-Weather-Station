@@ -1,7 +1,4 @@
 # STM32 Real-Time Environmental Datalogger V1
-
-<CENTER><img src="docs/stm32_weather_station_diagram.png" width="500"></CENTER>
-
  
 ## Overview
 This repository contains an embedded, low-power environmental monitoring system based on the **STM32** microcontrollers. It periodically samples meteorological parameters, adds high-precision time tracking, updates a local interface, and redundantly logs data locally and externally via USB.
@@ -18,8 +15,7 @@ The project follows strict **IVVQ (Integration, Verification, Validation, and Qu
 
 ## Architecture & Communication Buses
 
-<img width="431" height="311" alt="{2FB96C71-CA8A-4B17-8B23-81BFB7693776}" src="https://github.com/user-attachments/assets/29129c16-f8ac-4525-9bea-94c82c09ce14" />
-
+<img src="docs/stm32_weather_station_diagram_en.png" width="500">
 
 ## Hardware Components
 * **MCU:** STM32 Microcontroller (ARM Cortex-M)
