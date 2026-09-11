@@ -1,7 +1,7 @@
 # STM32 Real-Time Environmental Datalogger V1
  
 ## Overview
-This repository contains an embedded, low-power environmental monitoring system based on the **STM32** microcontrollers. It periodically samples meteorological parameters, adds high-precision time tracking, updates a local interface, and redundantly logs data locally and externally via USB.
+This repository contains an embedded, low-power environmental monitoring system based on the **STM32** microcontrollers. It periodically samples meteorological parameters, adds high-precision time tracking, updates a local interface, and redundantly logs data locally on a SD card and externally via USB usable in the Python script in tests/.
 
 The project follows strict **IVVQ (Integration, Verification, Validation, and Quality)** practices suited for scientific instrumentation and high-reliability data acquisition.
 
@@ -10,7 +10,7 @@ The project follows strict **IVVQ (Integration, Verification, Validation, and Qu
 * **Precise Timestamping:** Integration of an external **RTC module** for accurate event logging.
 * **Dual Storage & Transmission:**
   * Local logging to **SD Card** via SPI/SDIO (FATFS file system).
-  * Real-time serial data streaming to PC via **USB Virtual COM Port (CDC)**.
+  * Real-time serial data streaming to PC via **UART** and real-time treatment in Python.
 * **Local UI:** Real-time metrics visualization on an **OLED Display** ($I^2C$).
 
 ## Architecture & Communication Buses
@@ -23,10 +23,10 @@ The project follows strict **IVVQ (Integration, Verification, Validation, and Qu
 * **RTC:** External Real-Time Clock Module (DS3231)
 * **Display:** OLED I2C 1.30" (SSD1106)
 * **Storage:** MicroSD Card Module
-* **Interface:** USB Type-A / Micro-USB (Virtual COM Port)
+* **Interface:** USB Type-A / Micro-USB (UART and Python)
 
 ## Repository Structure
 ```text
 ├── docs/            # Hardware schematics, datasheets
 ├── firmware/        # STM32 C/C++ source code (Drivers, Middleware, FatFS)
-└── tests/           # Unit tests and simulation outputs
+└── tests/           # Unit tests, python plot and simulation outputs
